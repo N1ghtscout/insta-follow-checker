@@ -1,0 +1,4 @@
+python-telegram-bot==13.7
+instagrapi
+Pillow>=8.1.1
+requests
