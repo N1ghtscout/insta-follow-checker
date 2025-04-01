@@ -37,6 +37,14 @@ If you want the bot to run 24/7, you can deploy it on:
 ## ⚠️ Important
 Instagram may temporarily block access if the bot performs too many requests. Use with caution!
 
+![зображення](https://github.com/user-attachments/assets/d91107a7-68d2-4ce4-958e-1f4a6980849d)
+
+Come up with a name for the bot, you can use numbers and letters
+![зображення](https://github.com/user-attachments/assets/1017a833-24a9-4c2b-8af8-343bc5130643)
+
+copy the API from the Telegram bot and paste it into the code
+
+run it and wait for it to do its thing.
 ---
 
 💡 Author: **YOUR NAME** | [GitHub](https://github.com/YOUR_USERNAME)
